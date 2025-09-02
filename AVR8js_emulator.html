@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AVR8js • Blink from Intel HEX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { font: 14px/1.4 system-ui, sans-serif; }
+    body { margin: 24px; display: grid; gap: 16px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    textarea { width: min(100%, 940px); height: 220px; font: 12px/1.3 ui-monospace, Menlo, Consolas, monospace; }
+    button { padding: 8px 14px; border: 0; border-radius: 10px; background: #222; color: #fff; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .led { width: 20px; height: 20px; border-radius: 50%; background: #333; box-shadow: inset 0 0 0 2px #0008; transition: background .12s, box-shadow .12s; }
+    .led.on { background: #0f0; box-shadow: 0 0 12px #0f08, inset 0 0 0 2px #040; }
+    .tag { font: 12px/1.2 ui-monospace, monospace; padding: 2px 6px; border-radius: 6px; background: #eee; }
+    table { border-collapse: collapse; }
+    td { padding: 2px 6px; border: 1px solid #ddd; font-family: ui-monospace, monospace; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "avr8js": "https://esm.sh/avr8js@0.20.1"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h1>AVR8js Blink from Intel HEX</h1>
+
+  <div class="row">
+    <div id="pinTag" class="tag"></div>
+    <div id="led" class="led"></div>
+    <span id="stateText"></span>
+    <span id="status" class="tag">idle</span>
+  </div>
+
+  <div class="row">
+    <table>
+      <tr><td>DDR</td><td id="ddr">0x00</td></tr>
+      <tr><td>PORT</td><td id="port">0x00</td></tr>
+      <tr><td>PIN</td><td id="pin">0x00</td></tr>
+    </table>
+  </div>
+
+  <textarea id="hex" spellcheck="false" placeholder="Paste your Intel HEX for Arduino Uno here.">
+:100000000C945C000C946E000C946E000C946E00CA
+:100010000C946E000C946E000C946E000C946E00A8
+:100020000C946E000C946E000C946E000C946E0098
+:100030000C946E000C946E000C946E000C946E0088
+:100040000C9413010C946E000C946E000C946E00D2
+:100050000C946E000C946E000C946E000C946E0068
+:100060000C946E000C946E00000000002400270029
+:100070002A0000000000250028002B0004040404CE
+:100080000404040402020202020203030303030342
+:10009000010204081020408001020408102001021F
+:1000A00004081020000000080002010000030407FB
+:1000B000000000000000000011241FBECFEFD8E0B8
+:1000C000DEBFCDBF21E0A0E0B1E001C01D92A930AC
+:1000D000B207E1F70E945D010C94CC010C94000082
+:1000E000E9EAF0E02491E5E9F0E09491E1E8F0E05C
+:1000F000E491EE23C9F0222339F0233001F1A8F472
+:10010000213019F1223029F1F0E0EE0FFF1FEE58F7
+:10011000FF4FA591B4912FB7F894EC91811126C0AF
+:1001200090959E239C932FBF08952730A9F02830E7
+:10013000C9F0243049F7209180002F7D03C0209121
+:1001400080002F7720938000DFCF24B52F7724BD48
+:10015000DBCF24B52F7DFBCF2091B0002F772093EC
+:10016000B000D2CF2091B0002F7DF9CF9E2BDACFF7
+:100170003FB7F8948091050190910601A091070185
+:10018000B091080126B5A89B05C02F3F19F0019634
+:10019000A11DB11D3FBFBA2FA92F982F8827BC01E1
+:1001A000CD01620F711D811D911D42E0660F771F09
+:1001B000881F991F4A95D1F708958F929F92AF9209
+:1001C000BF92CF92DF92EF92FF920E94B8004B0154
+:1001D0005C0188EEC82E83E0D82EE12CF12C0E9421
+:1001E000B800681979098A099B09683E734081053E
+:1001F0009105A8F321E0C21AD108E108F10888EEC0
+:10020000880E83E0981EA11CB11CC114D104E10426
+:10021000F10429F7FF90EF90DF90CF90BF90AF905F
+:100220009F908F9008951F920F920FB60F921124F6
+:100230002F933F938F939F93AF93BF93809101012F
+:1002400090910201A0910301B0910401309100014D
+:1002500023E0230F2D3758F50196A11DB11D2093E2
+:1002600000018093010190930201A0930301B093D8
+:1002700004018091050190910601A0910701B091C0
+:1002800008010196A11DB11D8093050190930601FF
+:10029000A0930701B0930801BF91AF919F918F91F7
+:1002A0003F912F910F900FBE0F901F90189526E849
+:1002B000230F0296A11DB11DD2CF789484B5826020
+:1002C00084BD84B5816084BD85B5826085BD85B5FA
+:1002D000816085BD80916E00816080936E00109278
+:1002E00081008091810082608093810080918100F3
+:1002F0008160809381008091800081608093800084
+:100300008091B10084608093B1008091B0008160E1
+:100310008093B00080917A00846080937A0080910D
+:100320007A00826080937A0080917A008160809365
+:100330007A0080917A00806880937A001092C100E0
+:10034000E5E9F0E02491E1E8F0E08491882399F078
+:1003500090E0880F991FFC01E859FF4FA591B491D7
+:10036000FC01EE58FF4F859194918FB7F894EC9172
+:10037000E22BEC938FBFC0E0D0E081E00E947000E0
+:100380000E94DD0080E00E9470000E94DD00209746
+:0C039000A1F30E940000F1CFF894FFCF11
+:00000001FF</textarea>
+
+  <div class="row">
+    <button id="run">Run</button>
+    <button id="stop" disabled>Stop</button>
+  </div>
+
+  <script type="module">
+    import { CPU, avrInstruction, AVRTimer, timer0Config } from "avr8js";
+
+    // === Choose which Arduino digital pin to visualize ===
+    // Your sketch uses PB5 (bit index), which Arduino maps to digital pin 5 (PD5).
+    const WATCH_PIN = 5;   // change to 13 if you switch to LED_BUILTIN / D13
+
+    function mapUnoPin(n) {
+      // D0..D7 = PD0..PD7, D8..D13 = PB0..PB5, A0..A5 = PC0..PC5 (14..19)
+      if (n >= 0 && n <= 7)   return { name: `D${n} / PD${n}`, PORT: 0x2B, DDR: 0x2A, PIN: 0x29, BIT: 1 << n };
+      if (n >= 8 && n <= 13)  return { name: `D${n} / PB${n-8}`, PORT: 0x25, DDR: 0x24, PIN: 0x23, BIT: 1 << (n - 8) };
+      if (n >= 14 && n <= 19) return { name: `A${n-14} / PC${n-14}`, PORT: 0x28, DDR: 0x27, PIN: 0x26, BIT: 1 << (n - 14) };
+      throw new Error("Unsupported Uno pin " + n);
+    }
+    const MAP = mapUnoPin(WATCH_PIN);
+
+    // DOM
+    const ledEl = document.getElementById("led");
+    const hexEl = document.getElementById("hex");
+    const runBtn = document.getElementById("run");
+    const stopBtn = document.getElementById("stop");
+    const statusEl = document.getElementById("status");
+    const ddrEl = document.getElementById("ddr");
+    const portEl = document.getElementById("port");
+    const pinEl = document.getElementById("pin");
+    const stateText = document.getElementById("stateText");
+    const pinTag = document.getElementById("pinTag");
+    pinTag.textContent = `Watching: ${MAP.name}`;
+
+    let cpu = null, timer0 = null, step = null, raf = null, running = false;
+    let regPORT = 0, regDDR = 0, regPIN = 0;
+
+    const setStatus = (t) => statusEl.textContent = t;
+    const hx = (v) => "0x" + (v & 0xFF).toString(16).toUpperCase().padStart(2, "0");
+
+    // === Minimal Intel HEX parser (00,01,02,04) ===
+    function parseIntelHex(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      let base = 0, seen = false;
+      const bytes = new Map();
+      for (const line of lines) {
+        if (line[0] !== ":") throw new Error('HEX line must start with ":"');
+        const count = parseInt(line.slice(1,3),16);
+        const addr  = parseInt(line.slice(3,7),16);
+        const type  = parseInt(line.slice(7,9),16);
+        const data  = line.slice(9, 9 + count*2);
+        const ck    = parseInt(line.slice(9 + count*2, 9 + count*2 + 2), 16);
+        let sum = count + (addr>>8) + (addr&0xFF) + type;
+        for (let i=0;i<data.length;i+=2) sum += parseInt(data.slice(i,i+2),16);
+        if (((sum + ck) & 0xFF) !== 0) throw new Error('HEX checksum mismatch');
+
+        if (type === 0x00) {
+          for (let i=0;i<count;i++) bytes.set(base + addr + i, parseInt(data.slice(i*2,i*2+2),16));
+          seen = true;
+        } else if (type === 0x01) break; // EOF
+        else if (type === 0x04) base = (parseInt(data,16) << 16) >>> 0;
+        else if (type === 0x02) base = (parseInt(data,16) << 4)  >>> 0;
+      }
+      if (!seen) throw new Error("No data records found");
+      const FLASH = 32768;
+      const image = new Uint8Array(FLASH);
+      bytes.forEach((v,a)=>{ if (a<FLASH) image[a]=v; });
+      return image;
+    }
+
+    function bytesToWordsLE(image) {
+      const words = new Uint16Array(image.length >>> 1);
+      for (let i=0;i<words.length;i++) words[i] = image[i*2] | (image[i*2+1] << 8);
+      return words;
+    }
+
+    function refreshUI() {
+      ddrEl.textContent  = hx(regDDR);
+      portEl.textContent = hx(regPORT);
+      pinEl.textContent  = hx(regPIN);
+      const on = !!(regDDR & MAP.BIT) && !!(regPORT & MAP.BIT);
+      ledEl.classList.toggle("on", on);
+      stateText.textContent = on ? "→ HIGH" : "→ LOW";
+    }
+
+    function initCpu(programWords) {
+      cpu = new CPU(programWords);
+      timer0 = new AVRTimer(cpu, timer0Config); // register Timer0 with CPU (for delay/millis)
+      step = () => avrInstruction(cpu);         // execute one instruction per call
+
+      cpu.writeHooks[MAP.DDR]  = (value) => { regDDR  = value & 0xFF; refreshUI(); };
+      cpu.writeHooks[MAP.PORT] = (value) => { regPORT = value & 0xFF; refreshUI(); };
+      cpu.writeHooks[MAP.PIN]  = (value) => { regPIN  = value & 0xFF; refreshUI(); };
+    }
+
+    function loop() {
+      if (!running) return;
+      const INSTR_PER_FRAME = 200000;
+      for (let i=0;i<INSTR_PER_FRAME;i++) {
+        step();
+        cpu.tick(); // advance timers/peripherals so delay() works
+      }
+      raf = requestAnimationFrame(loop);
+    }
+
+    function stop() {
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      runBtn.disabled = false;
+      stopBtn.disabled = true;
+      setStatus("stopped");
+    }
+
+    runBtn.addEventListener("click", () => {
+      try {
+        stop();
+        regPORT = regDDR = regPIN = 0; refreshUI();
+        ledEl.classList.remove("on");
+
+        const txt = hexEl.value.trim();
+        if (!txt) return alert("Paste your Intel HEX first.");
+
+        setStatus("parsing HEX…");
+        const image = parseIntelHex(txt);
+
+        setStatus("initializing CPU…");
+        const program = bytesToWordsLE(image);
+        initCpu(program);
+
+        running = true;
+        runBtn.disabled = true;
+        stopBtn.disabled = false;
+        setStatus("running");
+        loop();
+      } catch (e) {
+        console.error(e);
+        setStatus("parse/init error");
+        alert("Parse/init error:\n" + (e && e.message ? e.message : e));
+      }
+    });
+
+    stopBtn.addEventListener("click", stop);
+  </script>
+</body>
+</html>
